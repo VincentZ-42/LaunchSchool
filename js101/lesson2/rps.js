@@ -7,7 +7,7 @@ function prompt(msg) {
 
 let playerWins = 0;
 let computerWins = 0;
-prompt('Best out of 5, win 3 times to win the game!')
+prompt('Best out of 5, win 3 times to win the game!');
 
 while (true) {
   // Ask for Player's choice
