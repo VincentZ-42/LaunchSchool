@@ -1,4 +1,4 @@
-const print = (...string) => console.log(...string);
+// const print = (...string) => console.log(...string);
 const line = (string) => console.log('-'.repeat(6) + ' ' + string + ' ' + '-'.repeat(6));
 
 line('Part 1');
@@ -33,13 +33,32 @@ line('Part 2');
 // NOT ALLOWED TO USE DATE CLASS METHODS
 
 function afterMidnight(time) {
-  const [ hours, minutes ] = time.split(':').map(num => Number(num));
-
+  if (time === "00:00" || time === "24:00") return 0;
+  let [ hours, minutes ] = time.split(':').map(num => Number(num));
+  while (hours > 0) {
+    minutes += 60;
+    hours -= 1;
+  }
+  return minutes;
 }
 
 function beforeMidnight(time) {
-  const [ hours, minutes ] = time.split(':').map(num => Number(num));
-  print(hours, minutes);
+  if (time === "00:00" || time === "24:00") return 0;
+  let [ hours, minutes ] = time.split(':').map(num => Number(num));
+
+  // porper sets hours
+  if (minutes > 0) {
+    hours = 24 - hours - 1;
+  }
+
+  // proper sets minutes
+  minutes = 60 - minutes;
+
+  while (hours > 0) {
+    minutes += 60;
+    hours -= 1;
+  }
+  return minutes;
 }
 
 console.log(afterMidnight("00:00") === 0);
@@ -48,3 +67,22 @@ console.log(afterMidnight("12:34") === 754);
 console.log(beforeMidnight("12:34") === 686);
 console.log(afterMidnight("24:00") === 0);
 console.log(beforeMidnight("24:00") === 0);
+
+/* More elegant solution
+const HOURS_PER_DAY = 24;
+const MINUTES_PER_HOUR = 60;
+const MINUTES_PER_DAY = HOURS_PER_DAY * MINUTES_PER_HOUR;
+
+function afterMidnight(timeStr) {
+  let [hours, minutes] = timeStr.split(":").map(num => Number(num));
+  return ((hours * MINUTES_PER_HOUR) + minutes) % MINUTES_PER_DAY;
+}
+
+function beforeMidnight(timeStr) {
+  let deltaMinutes = MINUTES_PER_DAY - afterMidnight(timeStr);
+  if (deltaMinutes === MINUTES_PER_DAY) {
+    deltaMinutes = 0;
+  }
+  return deltaMinutes;
+}
+*/
