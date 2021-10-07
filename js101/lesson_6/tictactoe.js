@@ -6,6 +6,12 @@ const readline = require('readline-sync');
 const INITIAL_MARKER = ' ';
 const HUMAN_MARKER = 'X';
 const COMPUTER_MARKER = 'O';
+const WIN = [
+  [1, 2, 3], [4, 5, 6], [7, 8, 9], // rows
+  [1, 4, 7], [2, 5, 8], [3, 6, 9], // columns
+  [1, 5, 9], [3, 5, 7]             // diagonals
+];
+const TURN = ['player', 'computer'];
 
 function joinOr(arr, delimiter = ',', ending = 'or') {
   let string = '';
@@ -73,11 +79,43 @@ function playerChoosesSquare(board) {
   board[choice] = HUMAN_MARKER;
 }
 
-function computerChoosesSquare(board) {
-  let randomIndex = Math.floor(Math.random() * emptySquares(board).length);
+function findAtRiskSquare(line, board, mark) {
+  let markersInLine = line.map(square => board[square]);
 
-  const choice = emptySquares(board)[randomIndex];
-  board[choice] = COMPUTER_MARKER;
+  if (markersInLine.filter(val => val === mark).length === 2) {
+    let unusedSquare = line.find(square => board[square] === INITIAL_MARKER);
+    if (unusedSquare !== undefined) {
+      return unusedSquare;
+    }
+  }
+
+  return null;
+}
+
+function computerChoosesSquare(board) {
+  let square;
+
+  for (let index = 0; index < WIN.length; index++) {
+    let line = WIN[index];
+    // Find winning move
+    square = findAtRiskSquare(line, board, COMPUTER_MARKER);
+    if (square) break;
+
+    // Find defensive move
+    square = findAtRiskSquare(line, board, HUMAN_MARKER);
+    if (square) break;
+  }
+
+  if (emptySquares(board).includes(5)) {
+    square = 5;
+  }
+
+  if (!square) {
+    let randomIndex = Math.floor(Math.random() * emptySquares(board).length);
+    square = emptySquares(board)[randomIndex];
+  }
+
+  board[square] = COMPUTER_MARKER;
 }
 
 function boardFull(board) {
@@ -90,11 +128,6 @@ function someoneWon(board) {
 }
 
 function detectWinner(board) {
-  const WIN = [
-    [1, 2, 3], [4, 5, 6], [7, 8, 9], // rows
-    [1, 4, 7], [2, 5, 8], [3, 6, 9], // columns
-    [1, 5, 9], [3, 5, 7]             // diagonals
-  ];
 
   for (let line = 0; line < WIN.length; line++) {
     let [a, b, c] = WIN[line];
@@ -115,16 +148,35 @@ function detectWinner(board) {
   return null;
 }
 
+let gameTracker = {
+  gamesPlayed: 0,
+  playerWon: 0,
+  computerWon: 0
+};
+
+function chooseSquare(board, currentPlayer) {
+  if (currentPlayer === 1) {
+    playerChoosesSquare(board);
+  } else {
+    computerChoosesSquare(board);
+  }
+}
+
+function alternatePlayer(currentPlayer) {
+  return currentPlayer === 1 ? 0 : 1;
+}
+
 while (true) {
   let board = initializeBoard();
-
+  let first = readline.question('Who goes first? (player or computer: ').toLowerCase();
+  while (!TURN.includes(first)) {
+    first = readline.question('Please pick player or computer: ');
+  }
+  let currentPlayer = ((first === 'player') ? 1 : 0);
   while (true) {
     displayBoard(board);
-
-    playerChoosesSquare(board);
-    if (someoneWon(board) || boardFull(board)) break;
-
-    computerChoosesSquare(board);
+    chooseSquare(board, currentPlayer);
+    currentPlayer = alternatePlayer(currentPlayer);
     if (someoneWon(board) || boardFull(board)) break;
   }
 
@@ -133,10 +185,24 @@ while (true) {
   if (someoneWon(board)) {
     const winner = detectWinner(board);
     print(`${winner} won!`);
+    if (winner === 'Player') {
+      gameTracker.playerWon += 1;
+    } else if (winner === 'Computer') {
+      gameTracker.computerWon += 1;
+    }
   } else {
     print("It's a tie!");
   }
 
-  const rematch = readline.question('Play again? (y or n)');
-  if (rematch !== 'y') break;
+  gameTracker.gamesPlayed += 1;
+  print(`${gameTracker.gamesPlayed} rounds have been played.`);
+  print(`You have won ${gameTracker.playerWon} games. Computer has won ${gameTracker.computerWon} games.`);
+  print(`Win ${5 - gameTracker.playerWon} more games to win match`);
+
+  if (gameTracker.playerWon === 5 || gameTracker.computerWon === 5) break;
+  let rematch = readline.question('Continue? (y or n): ').toLowerCase();
+  while (!'yn'.includes(rematch)) {
+    rematch = readline.question('Please enter y or n: ');
+  }
+  if (rematch === 'n') break;
 }
