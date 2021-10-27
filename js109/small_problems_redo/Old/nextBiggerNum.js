@@ -22,12 +22,13 @@ function nextBiggerNum(num) {
   for (let temp = num + 1; temp <= maxNum; temp++) {
     if (isSameDigits(temp, num)) return temp;
   }
+  return -1;
 }
 
-console.log(nextBiggerNum(9) === -1) //true
-console.log(nextBiggerNum(12) === 21) //true
-console.log(nextBiggerNum(513) === 531) //true
-console.log(nextBiggerNum(2017) === 2071) //true
-console.log(nextBiggerNum(111) === -1) //true
-console.log(nextBiggerNum(531) === -1) //true
-console.log(nextBiggerNum(123456789) === 123456798) //true
+console.log(nextBiggerNum(9) === -1); //true
+console.log(nextBiggerNum(12) === 21); //true
+console.log(nextBiggerNum(513) === 531); //true
+console.log(nextBiggerNum(2017) === 2071); //true
+console.log(nextBiggerNum(111) === -1); //true
+console.log(nextBiggerNum(531) === -1); //true
+console.log(nextBiggerNum(123456789) === 123456798); //true
