@@ -45,7 +45,7 @@ function longestSentence(text) {
     text = text.slice(end).trim();
   } while (text.length > 0);
 
-  // Creates a array of lengths with index corresponding to sentences array
+  // Creates an array of lengths with index corresponding to sentences array
   sentences.forEach(sentence => sentenceLengths.push(sentence.split(' ').length));
 
   const longestIndex = sentenceLengths.indexOf(Math.max(...sentenceLengths));

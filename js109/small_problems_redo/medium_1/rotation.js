@@ -12,7 +12,7 @@ Problem:
 Examples:
 
 Data Structure and Algorithm
-  1. Check input and either return specific cases or continue function
+  1. Check input   and either return specific cases or continue function
   2. Copy array and perform methods to take off first element and append it to end of array
   3. Return the mutated array
 

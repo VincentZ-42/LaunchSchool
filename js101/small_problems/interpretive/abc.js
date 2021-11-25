@@ -6,6 +6,7 @@ P - Understanding the Problem
     String must meet following to be true:
     Can not use a pair of letters
     Can noy use any pair twice
+    Ignore cases
 
 Data Structure n Algorithm
   1. Object to hold pairs of letters (inside func or global)

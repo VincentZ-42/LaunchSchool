@@ -1,3 +1,4 @@
+/* eslint-disable id-length */
 /* PEDAC
   Input: Array of Integers
   Output: Integer
@@ -34,7 +35,7 @@ function findEvenIndex(array) {
     if (i > 0) {
       left += array[i - 1];
     }
-    if (left == right) return i;
+    if (left === right) return i;
 
   }
   return -1;
