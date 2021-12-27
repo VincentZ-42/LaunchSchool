@@ -1,0 +1,30 @@
+{
+  "name": "todolist",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "directories": {
+    "lib": "lib",
+    "test": "test"
+  },
+  "dependencies": {},
+  "scripts": {
+    "babel": "npx babel lib --out-dir dist --presets=@babel/preset-env"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/VincentZ-42/todolist_project.git"
+  },
+  "author": "Vincent Zhao",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/VincentZ-42/todolist_project/issues"
+  },
+  "homepage": "https://github.com/VincentZ-42/todolist_project#readme",
+  "devDependencies": {
+    "@babel/cli": "^7.16.0",
+    "@babel/core": "^7.16.5",
+    "@babel/preset-env": "^7.16.5",
+    "eslint": "^8.5.0"
+  }
+}
