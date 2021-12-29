@@ -37,7 +37,7 @@ class RomanNumeral {
     let romNum = "";
     const romanLetter = ['M', 'D', 'C', 'L', 'X', 'V', 'I'];
     const romanValues = [1000, 500, 100, 50, 10, 5, 1];
-    romanLetter.forEach((letter, index) => {
+    romanLetter.forEach(function(letter, index) {
       while (decNum >= romanValues[index]) {
         romNum += letter;
         decNum -= romanValues[index];

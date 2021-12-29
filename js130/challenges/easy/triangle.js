@@ -1,10 +1,11 @@
 /* PEDAC
-Problem: Write a program to determine whether a triagnel is equilaterial, isosceles, or scalene
+Problem: Write side1 program to determine whether type of triagnel
   Input: 3 Numbers
   Output: Type of Triangle (Equ, Isos, Sca)
   Rules:
     - all side lengths must > 0
     - sum of lengths of any two sides > 3rd
+    - Types = equilaterial, isosceles, or scalene
     - Equ = 3 sides are equal
     - Iso = exactly 2 sides are equal
     - Sca = all sides are unequal
@@ -34,21 +35,25 @@ Algorithms
 */
 
 class Triangle {
-  constructor(a, b, c) {
-    if (!this._valid(a, b, c)) throw new Error('Not a valid triangle');
-    this.lengths = [a, b, c];
+  constructor(side1, side2, side3) {
+    if (!this._valid(side1, side2, side3)) throw new Error('Not a valid triangle');
+    this.lengths = [side1, side2, side3];
   }
 
   kind() {
-    let [a, b, c] = this.lengths;
-    if (a === b && a === c) return "equilateral";
-    else if (a === b || b === c || a === c) return "isosceles";
+    let [side1, side2, side3] = this.lengths;
+    if (side1 === side2 && side1 === side3) return "equilateral";
+    else if (side1 === side2 || side2 === side3 || side1 === side3) return "isosceles";
     else return "scalene";
   }
 
-  _valid(a, b, c) {
-    if (a <= 0 || b <= 0 || c <= 0) return false;
-    if ((a + b <= c) || (a + c <= b) || (b + c <= a)) return false;
+  _valid(side1, side2, side3) {
+    if (side1 <= 0 || side2 <= 0 || side3 <= 0) return false;
+    if ((side1 + side2 <= side3) ||
+        (side1 + side3 <= side2) ||
+        (side2 + side3 <= side1)) {
+      return false;
+    }
     return true;
   }
 }

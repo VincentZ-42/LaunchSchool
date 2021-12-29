@@ -1,11 +1,12 @@
 /* PEDAC
-Problem: Write a program that calculates the Hamming distance between two DNA strands
+Problem:
+  - Write a program that calculates the Hamming distance between two DNA strands
   Input: String
   Output: Integer (# of diff between dna strand n input)
   Rules:
     - Hamming distance is the differences between two homologous DNA strands
-    - If two sequences of unequal length, compute Hamming distance for shorter one
-  
+    - If 2 sequences of unequal length, compute Hamming distance for shorter one
+
   Questions:
     - Assume Inputs are always Strings and Valid
 
@@ -31,7 +32,7 @@ Algorithm
       - [short, long] = whichIsShorter(dna, input);
     - Set count = 0;
     - For loop iteration of short dna
-      - If short[i] !== long[i], count += 1
+      - If short[index] !== long[i], count += 1
     - return count
 */
 
@@ -50,8 +51,8 @@ class DNA {
   hammingDistance(input) {
     const [ short, long ] = this.whichisShorter(this.strand, input);
     let count = 0;
-    for (let i = 0; i < short.length; i ++) {
-      if (short[i] !== long[i]) count += 1;
+    for (let index = 0; index < short.length; index++) {
+      if (short[index] !== long[index]) count += 1;
     }
     return count;
   }

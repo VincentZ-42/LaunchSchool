@@ -6,7 +6,7 @@ describe("DNA", () => {
     expect(dna.hammingDistance('')).toBe(0);
   });
 
-  test("no difference between identical strands", () => {
+  xtest("no difference between identical strands", () => {
     let dna = new DNA('GGACTGA');
     expect(dna.hammingDistance('GGACTGA')).toBe(0);
   });
