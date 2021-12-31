@@ -1,0 +1,19 @@
+{
+  "name": "medium",
+  "version": "1.0.0",
+  "description": "For challenges",
+  "main": "diamond.js",
+  "scripts": {
+    "eslint": "npx eslint *.js"
+  },
+  "author": "Vincent Zhao",
+  "license": "ISC",
+  "dependencies": {
+    "seedrandom": "^3.0.5"
+  },
+  "devDependencies": {
+    "babel-eslint": "^10.1.0",
+    "eslint": "^7.12.1",
+    "eslint-cli": "^1.1.1"
+  }
+}

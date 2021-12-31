@@ -2,3 +2,4 @@
 .DS_Store
 .eslintrc.yml
 package-lock.json
+/js130/challenges/medium/node_modules
