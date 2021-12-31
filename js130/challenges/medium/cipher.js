@@ -27,7 +27,6 @@ Algorithm
 
   Helper function
     isLetter()
-    isCap()
 
 */
 
@@ -61,5 +60,7 @@ class Cipher {
     return false;
   }
 }
+
+module.exports = Cipher;
 
 module.exports = Cipher;
