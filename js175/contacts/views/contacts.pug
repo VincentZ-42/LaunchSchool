@@ -7,15 +7,15 @@ block content
       tr
         th Name
         th Phone Number
-        th
+        //- th
     tbody
       each contact in contacts
         tr
           td #{contact.lastName}, #{contact.firstName}
           td= contact.phoneNumber
-          td
-            button.delete(type='button')
-              img(src="images/delete.svg")
+          //- td
+          //-   button.delete(type='button')
+          //-     img(src="images/delete.svg")
     tfoot
       tr
         td(colspan="3")
