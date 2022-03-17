@@ -1,6 +1,5 @@
 node_modules
 .DS_Store
 .eslintrc.yml
-package-lock.json
 /js130/challenges/medium/node_modules
 /js139/exam
