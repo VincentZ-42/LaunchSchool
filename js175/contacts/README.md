@@ -11,7 +11,7 @@
 
 | Homepage | Add a New Contact |
 | :------: | :----------: |
-| ![Homepage](/public/images/contacts.jpg) | ![new-contact](/public/images/contact-new.jpg) |
+| ![Homepage](https://github.com/VincentZ-42/LaunchSchool/blob/main/js175/contacts/public/images/contacts.jpg) | ![new-contact](https://github.com/VincentZ-42/LaunchSchool/blob/main/js175/contacts/public/images/contact-new.jpg) |
 
 ## Usage (Run from localhost)
 1. Clone repositiory into desired directory location
