@@ -8,11 +8,17 @@ const flash = require('express-flash');
 const app = express();
 const LokiStore = store(session);
 
+const deleteContact = (contact) => {
+  let output = `${contact.firstName} ${contact.lastName} ${contact.phoneNumber}`
+  console.log(output);
+}
+
 const contactData = [
   {
     firstName: "Mike",
     lastName: "Jones",
     phoneNumber: "281-330-8004",
+    delete: deleteContact,
   },
   {
     firstName: "Jenny",

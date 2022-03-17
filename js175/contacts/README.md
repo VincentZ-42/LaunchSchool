@@ -9,6 +9,10 @@
 ## Description
 - Creating a Node.js based web application with Express.js to learn about forms, validation, redirection vs rendering, data persistence with sessions, flash messages, and express-validator. 
 
+| Homepage | Add a New Contact |
+| :------: | :----------: |
+| ![form](/public/images/contacts.jpg) | ![loan details](/public/images/contact-new.jpg) |
+
 ## Usage (Run from localhost)
 1. Clone repositiory into desired directory location
 2. Navigate to directory in the terminal
