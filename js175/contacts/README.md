@@ -13,7 +13,7 @@
 | :------: | :----------: |
 | ![Homepage](https://github.com/VincentZ-42/LaunchSchool/blob/main/js175/contacts/public/images/contacts.jpg) | ![new-contact](https://github.com/VincentZ-42/LaunchSchool/blob/main/js175/contacts/public/images/contact-new.jpg) |
 
-## Usage (Run from localhost)
+## Usage
 1. Clone repositiory into desired directory location
 2. Navigate to directory in the terminal
 3. In the terminal:
