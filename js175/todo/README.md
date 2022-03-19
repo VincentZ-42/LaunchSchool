@@ -13,8 +13,8 @@ See below for a snapshot of all the features offerred by the application:
 
 | Feature | Picture |
 | :------: | :----------: |
-| Homepage | [homepage](./public/images/homepage.png) |
-| Creating a new To-Do List | [new-todolist](./public/images/new-todolist.png) |
+| Homepage | ![homepage](./public/images/homepage.png) |
+| Creating a new To-Do List | ![new-todolist](./public/images/new-todolist.png) |
 
 ## Usage
 - Application is run on your local machine or localhost in port 3000
