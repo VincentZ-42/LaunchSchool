@@ -14,6 +14,10 @@
 | ![Homepage](https://github.com/VincentZ-42/LaunchSchool/blob/main/js175/contacts/public/images/contacts.jpg) | ![new-contact](https://github.com/VincentZ-42/LaunchSchool/blob/main/js175/contacts/public/images/contact-new.jpg) |
 
 ## Usage
+- Application is run on your local machine or localhost in port 3000
+- Must have node pre-installed in order to run 
+
+### Steps to run application
 1. Clone repositiory into desired directory location
 2. Navigate to directory in the terminal
 3. In the terminal:
