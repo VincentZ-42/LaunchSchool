@@ -15,6 +15,9 @@ See below for a snapshot of all the features offerred by the application:
 | :------: | :----------: |
 | Homepage | ![homepage](./public/images/homepage.png) |
 | Creating a new To-Do List | ![new-todolist](./public/images/new-todolist.png) |
+| Homepage with many To-Do Lists | ![many-todos](./public/images/many-todos.png) |
+| Editing To-Do List Title | ![edit-todo](./public/images/edit-todo.png) |
+| Editing/Adding tasks to a To-Do List | ![single-todo](./public/images/single-todo.png) |
 
 ## Usage
 - Application is run on your local machine or localhost in port 3000
