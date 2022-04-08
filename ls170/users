@@ -1,0 +1,197 @@
+/q
+\q
+\conninfo
+\q
+\q
+\q
+\q
+\l
+\q
+SELECT * FROM orders
+;
+SELECT side FROM orders;
+SELECT drink, side FROM orders;
+SELECT customer_name FROM orders WHERE side = 'Fries';
+SELECT customer_name FROM orders
+;
+SELECT * FROM orders WHERE drink = 'Chocolate Shake';
+SELECT * FROM orders
+where id = 2;
+SELECT * FROM orders where side = 'Onion Rings';
+SELECT customer_name
+FROM orders
+WHERE side = 'Onion Rings'
+;
+SELECT burger, side, drink
+FROM orders
+WHERE id = 2
+;
+\q
+\list
+\l
+create another_database;
+create database another_database;
+CREATE database my_database
+\l
+create database my_database;
+CREATE DATABASE my_database;
+\l
+CREATE DATABASE yet_another_database;
+\l
+\c another_database
+\c yet_another_database
+DROP another_database
+;
+\l
+DROP DATABASE another_database;
+dropdb yet_another_database;
+dropdb yet_another_database;
+\q
+\\l
+\l
+\q
+\q
+CREATE DATABASE database_two;
+\c database_two;
+\l
+DELETE DATABASE database_two;
+DROP DATABASE database_two;
+\c database_one;
+DROP DATABASE database_two;
+\q
+\l
+\q
+\l
+\q
+CREATE TABLE users (
+id serial UNIQUE NOT NULL,
+username char(25),
+enabled boolean DEFAULT TRUE
+);
+\l
+SELECT * FROM sql_book
+;
+\q
+SELECT * FROM sql_book
+;
+SELECT *
+;
+SELECT * FROM my_database;
+SELECT * FROM users
+;
+\dt
+\d
+\d users
+\q
+CREATE TABLE countries(
+id serial,
+name varchar(50),
+capital varchar(50),
+population integer
+)
+/d countries
+\d countries
+\d
+\q
+\l
+\c encyclopedia 
+CREATE TABLE countries (
+id serial,
+name varchar(50) UNIQUE NOT NULL,
+capital varcahr(50) NOT NULL,
+population integer
+);
+CREATE TABLE countries (
+id serial,
+name varchar(50) UNIQUE NOT NULL,
+capital varchar(50) NOT NULL,
+population integer);
+\d
+\d countries
+CREATE TABLE famous_people (
+id identity,
+name char(100) NOT NULL,
+occupation char(150),
+date_of_birth char(50),
+deceased boolean DEFAULT FALSE);
+CREATE TABLE famous_people (
+id serial,
+name char(100) NOT NULL,
+occupation char(150),
+date_of_birth char(50),
+deceased boolean DEFAULT FALSE);
+\d
+\d famous_people
+CREATE TABLE animals (
+id serial,
+name char(100) NOT NULL,
+binomial_name char(100) NOT NULL,
+max_weight decimal,
+max_age integer,
+conservation_status char(2));
+\d animals
+\d
+\l
+\dt
+\d animals
+\q
+CREATE TABLE orders (
+id serial,
+customer_name varcahr(100) NOT NULL,
+burger varchar(50),
+side varcahr(50),
+drink varchar(50),
+order_total decimal(4, 2) NOT NULL);
+CREATE TABLE orders (
+id serial,
+customer_name varcahr(100) NOT NULL,
+burger varchar(50),
+side varchar(50),
+drink varchar(50),
+order_total decimal(4, 2) NOT NULL);
+CREATE TABLE orders (
+id serial,
+customer_name varchar(100) NOT NULL,
+burger varchar(50),
+side varchar(50),
+drink varchar(50),
+order_total decimal(4, 2) NOT NULL);
+\dt
+\d
+\d orders
+\q
+\d users
+\d users
+\q
+\d users
+\d
+\c users
+\q
+\d
+\l
+\q
+\c sql_book 
+\l
+\d sql_book
+\q
+CREATE TABLE users (
+id serial UNIQUE NOT NULL,
+full_name varchar(25) NOT NULL,
+enabled boolean DEFAULT TRUE,
+last_login timestamp without time zone DEFAULT now();
+);
+CREATE TABLE users (
+    id serial UNIQUE NOT NULL,
+    full_name character varying(25) NOT NULL,
+    enabled boolean DEFAULT true,
+    last_login timestamp without time zone DEFAULT now()
+);
+\d users
+DROP TABLE users;
+CREATE TABLE users (
+    id serial UNIQUE NOT NULL,
+    full_name character varying(25) NOT NULL,
+    enabled boolean DEFAULT true,
+    last_login timestamp without time zone DEFAULT now()
+);
+\s users
