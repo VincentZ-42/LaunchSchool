@@ -1,6 +1,10 @@
 #!/usr/bin/env node
 
 const { Client } = require('pg');
+const readline = require('readline').createInterface({
+	input: process.stdin,
+	output: process.stdout
+});
 
 async function logAndExit(error) {
 	console.log(error);
@@ -12,8 +16,23 @@ class ExpenseData {
 		this.client = new Client({ database: 'expenses'});
 	}
 	
+	async setupSchema() {
+		let query = `SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'expenses'`
+		let res = await this.client.query(query).catch(err => logAndExit);
+		if (res.rowCount === 0) {
+			let tableCreationQuery = `CREATE TABLE expenses (
+				id serial PRIMARY KEY,
+				amount numeric(6,2) NOT NULL,
+				memo text NOT NULL,
+				created_on date NOT NULL
+			)`;
+			await this.client.query(tableCreationQuery).catch(err => logAndExit(err));
+		}
+	}
+
 	async addExpense(amount, memo) {
 		await this.client.connect().catch(err => logAndExit(err));
+		await this.setupSchema().catch(err => logAndExit(err));
 		let date = new Date();
 		date = date.toLocaleDateString();
 		let values = [amount, memo, date];
@@ -24,23 +43,121 @@ class ExpenseData {
 		await this.client.end().catch(err => logAndExit(err));
 	};	
 
-	async listExpenses() {
-		let query = "SELECT * from expenses ORDER BY created_on";
+  displayExpenses(expenses) {
+    expenses.forEach(tuple => {
+      let columns = [
+        `${tuple.id}`.padStart(3),
+        tuple.created_on.toDateString().padStart(10),
+        tuple.amount.padStart(12),
+        tuple.memo
+      ];
 
-		await this.client.connect().catch(err => logAndExit(err));
-	
-		let data = await this.client.query(query).catch(err => logAndExit(err));
-	
-		for (let i = 0; i < data.rowCount; i++) {
-			const row = [
-				`${data.rows[i].id}`.padStart(3),
-				data.rows[i].created_on.toDateString().padStart(10),
-				data.rows[i].amount.padStart(12),
-				data.rows[i].memo
-			]
-			console.log(row.join(` | `));
+      console.log(columns.join(' | '));
+    });
+  }
+
+  async listExpenses() {
+    await this.client.connect().catch(err => logAndExit(err));
+		await this.setupSchema().catch(err => logAndExit(err));
+
+    let res = await this.client.query("SELECT * FROM expenses ORDER BY created_on ASC")
+                               .catch(err => logAndExit(err));
+
+    this.displayCount(res.rowCount);
+		this.displayExpenses(res.rows);
+		this.displayTotal(res.rows);
+
+    await this.client.end().catch(err => logAndExit(err));
+  }
+
+  async searchExpenses(query) {
+    await this.client.connect().catch(err => logAndExit(err));
+		await this.setupSchema().catch(err => logAndExit(err));
+
+    let queryText = 'SELECT * FROM expenses WHERE memo ILIKE $1'
+    let res = await this.client.query(queryText, [`%${query}%`])
+                               .catch(err => logAndExit(err));
+
+		this.displayCount(res.rowCount);
+		this.displayExpenses(res.rows);
+		this.displayTotal(res.rows);
+
+    await this.client.end().catch(err => logAndExit(err));
+  }
+
+	async deleteExpense(id) {
+    await this.client.connect().catch(err => logAndExit(err));
+		await this.setupSchema().catch(err => logAndExit(err));
+
+    let queryText = 'SELECT * FROM expenses WHERE id = $1'
+
+		try {
+			let res = await this.client.query(queryText, [id]).catch(err => logAndExit(err));
+			console.log('The following expenses has been deleted:');
+			this.displayExpenses(res.rows);
+			queryText = `DELETE FROM expenses where id = $1`;
+			await this.client.query(queryText, [id]).catch(err => logAndExit(err));
+		} catch(err) {
+			console.log(`There is no expense with the id '${id}'.`);
 		}
+
+
+    await this.client.end().catch(err => logAndExit(err));
+	}
+
+	async deleteAllExpenses() {
+		await this.client.connect().catch(err => logAndExit(err));
+		await this.setupSchema().catch(err => logAndExit(err));
+		await this.client.query(`DELETE FROM expenses`).catch(err => logAndExit(err));
+		console.log('All expenses have been deleted');
 		await this.client.end().catch(err => logAndExit(err));
+	}
+
+  displayCount(num) {
+    if (num > 0) {
+      console.log(`There are ${num} expenses.`);
+    } else {
+      console.log('There are no expenses.');
+    }
+  }
+	
+	displayTotal(expenses) {
+    // 1. Iterate through expenses
+    //    - Calculate total price from each iteration
+    //    - Find the row with max length or just max row length
+    // Print divider line with max row length
+    // Print Total line with total and padding
+
+    let total = 0.0;
+    let dividerLength = 0;
+
+    expenses.forEach(tuple => {
+      let columns = [
+        `${tuple.id}`.padStart(3),
+        tuple.created_on.toDateString().padStart(10),
+        tuple.amount.padStart(12),
+        tuple.memo
+      ];
+      const rowLength = columns.join(' | ').length;
+
+      total += Number(tuple.amount);
+      if (rowLength > dividerLength) {
+        dividerLength = rowLength;
+      }
+    });
+
+    console.log('-'.repeat(dividerLength));
+    console.log(`Total` + `${String(total).padStart(31)}`);
+  }
+
+	async displayRes() {
+		await this.client.connect().catch(err => logAndExit(err));
+
+    let res = await this.client.query("SELECT * FROM expenses ORDER BY created_on ASC")
+                               .catch(err => logAndExit(err));
+
+		console.log(res);
+    await this.client.end().catch(err => logAndExit(err));
 	}
 }
 
@@ -70,15 +187,30 @@ return info;
 		if (args.length === 0) {
 			this.displayHelp();
 		} else {
-			let cmd = args[0];
-			if (cmd.toLowerCase() === 'list') {
+			let cmd = args[0].toLowerCase();
+			if (cmd === 'list') {
 				this.application.listExpenses();
-			} else if (cmd.toLowerCase() === 'add') {
+			} else if (cmd === 'add') {
 				if (args.length < 3) {
 					console.log('You must provide an ammount and memo');
 				} else {
 					this.application.addExpense(args[1], args[2]);
 				}
+			} else if (cmd === 'search') {
+				this.application.searchExpenses(args[1]);
+			} else if (cmd === 'delete') {
+				this.application.deleteExpense(args[1]);
+			} else if (cmd === 'clear') {
+				readline.question('This will remove all epxenses. Are you sure? (enter y to confirm) ',
+					ans => {
+						if (ans === 'y') {
+							this.application.deleteAllExpenses();
+						}
+						readline.close();
+					});
+			}
+			else if (cmd === 'res') {
+				this.application.displayRes();
 			}
 		}
 	}
