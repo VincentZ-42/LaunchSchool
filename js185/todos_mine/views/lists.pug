@@ -10,7 +10,7 @@ block main
         li(class=todoInfo.isDone ? "done" : "")
           a(href=`/lists/${todoList.id}`)
             h2= todoList.title
-            p #{todoList.todos.filter(todo => todo.done).length} / #{todoList.todos.length}
+            p #{todoInfo.countDoneTodos} / #{todoInfo.countAllTodos}
 
 block headerLinks
   .actions
