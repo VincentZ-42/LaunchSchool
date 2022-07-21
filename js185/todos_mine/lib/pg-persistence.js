@@ -1,9 +1,6 @@
 const { dbQuery } = require("./db-query");
 
 module.exports = class PgPersistence {
-  constructor(session) {
-
-  }
 
   // Returns a promise that resolves to a sorted list of all the todo lists
   // together with their todos. The list is sorted by completion status and
@@ -88,59 +85,97 @@ module.exports = class PgPersistence {
     return result.rowCount > 0;
   }
 
-  // Mark all todos on the todo list as done. Returns `true` on success,
-  // `false` if the todo list doesn't exist. The todo list ID must be numeric.
-  completeAllTodos(todoListId) {
+  // Returns a copy of the indicated todo in the indicated todo list. Returns
+  // `undefined` if either the todo list or the todo is not found. Note that
+  // both IDs must be numeric.
+  async loadTodo(todoListId, todoId) {
+    const FIND_TODO = "SELECT * FROM todos WHERE todolist_id = $1 AND id = $2";
 
+    let result = await dbQuery(FIND_TODO, todoListId, todoId);
+    return result.rows[0];
   }
 
-  // Create a new todo list with the specified title and add it to the list of
-  // todo lists. Returns `true` on success, `false` on failure. (At this time,
-  // there are no known failure conditions.)
-  createTodoList(title) {
+  // Delete a todo from the specified todo list. Returns a promise that resolves
+  // to `true` on success, `false` on failure.
+  async deleteTodo(todoListId, todoId) {
+    const DELETE_TODO = "DELETE FROM todos WHERE todolist_id = $1 AND id = $2";
 
+    let result = await dbQuery(DELETE_TODO, todoListId, todoId);
+    return result.rowCount > 0;
   }
 
   // Create a new todo with the specified title and add it to the indicated todo
-  // list. Returns `true` on success, `false` on failure.
-  createTodo(todoListId, title) {
+  // list. Returns a promise that resolves to `true` on success, `false` on
+  // failure.
+  async createTodo(todoListId, title) {
+    const CREATE_TODO = "INSERT INTO todos (todolist_id, title) VALUES ($1, $2)";
 
+    let result = await dbQuery(CREATE_TODO, todoListId, title);
+
+    return result.rowCount > 0;
   }
 
-  // Delete a todo list from the list of todo lists. Returns `true` on success,
-  // `false` if the todo list doesn't exist. The ID argument must be numeric.
-  deleteTodoList(todoListId) {
+  // Mark all todos on the todo list as done. Returns `true` on success,
+  // `false` if the todo list doesn't exist. The todo list ID must be numeric.
+  async completeAllTodos(todoListId) {
+    const COMPLETE_ALL = "UPDATE todos SET done = true WHERE $1 and NOT done";
 
+    let result = await dbQuery(COMPLETE_ALL, todoListId);
+    return result.rowCount > 0;
   }
 
-  // Delete the specified todo from the specified todo list. Returns `true` on
-  // success, `false` if the todo or todo list doesn't exist. The id arguments
-  // must both be numeric.
-  deleteTodo(todoListId, todoId) {
+  // Delete a todo list and all of its todos (handled by cascade). Returns a
+  // Promise that resolves to `true` on success, false if the todo list doesn't
+  // exist.
+  async deleteTodoList(todoListId) {
+    const DELETE_TODOLIST = "DELETE FROM todolists WHERE id = $1";
 
+    let result = await dbQuery(DELETE_TODOLIST, todoListId);
+    return result.rowCount > 0;
   }
 
   // Does the todo list have any undone todos? Returns true if yes, false if no.
   hasUndoneTodos(todoList) {
-
+    return todoList.todos.some(todo => !todo.done);
   }
 
-  // Returns `true` if a todo list with the specified title exists in the list
-  // of todo lists, `false` otherwise.
-  existsTodoListTitle(title) {
+  // Returns a Promise that resolves to `true` if a todo list with the specified
+  // title exists in the list of todo lists, `false` otherwise.
+  async existsTodoListTitle(title) {
+    const FIND_TODOLIST = "SELECT null from todolists WHERE title ILIKE $1";
 
-  }
-
-  // Returns a copy of the indicated todo in the indicated todo list. Returns
-  // `undefined` if either the todo list or the todo is not found. Note that
-  // both IDs must be numeric.
-  loadTodo(todoListId, todoId) {
-
+    let result = await dbQuery(FIND_TODOLIST, title);
+    return result.rowCount > 0;
   }
 
   // Set a new title for the specified todo list. Returns `true` on success,
   // `false` if the todo list isn't found. The todo list ID must be numeric.
-  setTodoListTitle(todoListId, title) {
+  async setTodoListTitle(todoListId, title) {
+    const SET_TODOLIST_TITLE = "UPDATE todolists SET title = $1 WHERE id = $2";
 
+    let result = await dbQuery(SET_TODOLIST_TITLE, title, todoListId);
+    return result.rowCount > 0;
+  }
+
+  // Returns `true` if `error` seems to indicate a `UNIQUE` constraint
+  // violation, `false` otherwise.
+  isUniqueConstraintViolation(_error) {
+    return false;
+  }
+
+  
+  // Create a new todo list with the specified title and add it to the list of
+  // todo lists. Returns a Promise that resolves to `true` on success, `false`
+  // if the todo list already exists.
+  async createTodoList(title) {
+    const CREATE_TODOLIST = "INSERT INTO todolists (title) VALUES ($1)";
+
+    try {
+      let result = await dbQuery(CREATE_TODOLIST, title);
+      return result.rowCount > 0;
+    } catch (error) {
+      if (this.isUniqueConstraintViolation(error)) return false;
+      throw error;
+    }
   }
 };
