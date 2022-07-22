@@ -61,8 +61,23 @@ const loadTodo = (todoListId, todoId, todoLists) => {
   return todoList.todos.find(todo => todo.id === todoId);
 };
 
+// Detect unauthorized access to routes.
+const requiresAuthentication = (req, res, next) => {
+  if (!res.locals.signedIn) {
+    res.redirect(302, "/users/signin");
+  } else {
+    next();
+  }
+};
+
+// Redirect start page
+app.get("/", (req, res) => {
+  res.redirect("/lists");
+});
+
 // Render the list of todo lists
 app.get("/lists",
+  requiresAuthentication,
   catchError(async (req, res) => {
     let store = res.locals.store;
     let todoLists = await store.sortedTodoLists();
@@ -80,12 +95,16 @@ app.get("/lists",
 );
 
 // Render new todo list page
-app.get("/lists/new", (req, res) => {
-  res.render("new-list");
-});
+app.get("/lists/new", 
+  requiresAuthentication,
+  (req, res) => {
+    res.render("new-list");
+  }
+);
 
 // Create a new todo list
 app.post("/lists",
+  requiresAuthentication,
   [
     body("todoListTitle")
       .trim()
@@ -126,6 +145,7 @@ app.post("/lists",
 
 // Render individual todo list and its todos
 app.get("/lists/:todoListId",
+  requiresAuthentication,
   catchError(async (req, res) => {
     let todoListId = req.params.todoListId;
     let todoList = await res.locals.store.loadTodoList(+todoListId);
@@ -143,6 +163,7 @@ app.get("/lists/:todoListId",
 
 // Toggle completion status of a todo
 app.post("/lists/:todoListId/todos/:todoId/toggle",
+  requiresAuthentication,
   catchError(async (req, res) => {
     let { todoListId, todoId } = req.params;
     let toggled = await res.locals.store.toggleDoneTodo(+todoListId, +todoId);
@@ -161,6 +182,7 @@ app.post("/lists/:todoListId/todos/:todoId/toggle",
 
 // Delete a todo
 app.post("/lists/:todoListId/todos/:todoId/destroy",
+  requiresAuthentication,
   catchError(async (req, res) => {
     let { todoListId, todoId } = req.params;
     let deleted = await res.locals.store.deleteTodo(+todoListId, +todoId);
@@ -172,19 +194,21 @@ app.post("/lists/:todoListId/todos/:todoId/destroy",
 );
 
 // Mark all todos as done
-app.post("/lists/:todoListId/complete_all", 
-catchError((req, res) => {
-  let todoListId = req.params.todoListId;
-  let completeAll = res.locals.store.completeAllTodos(+todoListId)
-  if (!completeAll) throw new Error("Not found.");
+app.post("/lists/:todoListId/complete_all",
+  requiresAuthentication, 
+  catchError((req, res) => {
+    let todoListId = req.params.todoListId;
+    let completeAll = res.locals.store.completeAllTodos(+todoListId)
+    if (!completeAll) throw new Error("Not found.");
 
-  req.flash("success", "All todos have been marked as done.");
-  res.redirect(`/lists/${todoListId}`);
-})
+    req.flash("success", "All todos have been marked as done.");
+    res.redirect(`/lists/${todoListId}`);
+  })
 );
 
 // Create a new todo and add it to the specified list
 app.post("/lists/:todoListId/todos",
+  requiresAuthentication,
   [
     body("todoTitle")
       .trim()
@@ -225,6 +249,7 @@ app.post("/lists/:todoListId/todos",
 
 // Render edit todo list form
 app.get("/lists/:todoListId/edit",
+  requiresAuthentication,
   catchError(async (req, res) => {
     let todoListId = req.params.todoListId;
     let todoList = await res.locals.store.loadTodoList(+todoListId);
@@ -235,19 +260,21 @@ app.get("/lists/:todoListId/edit",
 );
 
 // Delete todo list
-app.post("/lists/:todoListId/destroy", 
-catchError(async (req, res) => {
-  let todoListId = req.params.todoListId;
-  let deleted = await res.locals.store.deleteTodoList(+todoListId);
-  if (!deleted) throw new Error("Not found.");
+app.post("/lists/:todoListId/destroy",
+  requiresAuthentication, 
+  catchError(async (req, res) => {
+    let todoListId = req.params.todoListId;
+    let deleted = await res.locals.store.deleteTodoList(+todoListId);
+    if (!deleted) throw new Error("Not found.");
 
-  req.flash("success", "Todo list deleted.");
-  res.redirect("/lists");
-})
+    req.flash("success", "Todo list deleted.");
+    res.redirect("/lists");
+  })
 );
 
 // Edit todo list title
 app.post("/lists/:todoListId/edit",
+  requiresAuthentication,
   [
     body("todoListTitle")
       .trim()
@@ -307,23 +334,27 @@ app.get("/users/signin", (req, res) => {
 });
 
 // Handle Sign In form submission
-app.post("/users/signin", (req, res) => {
-  let username = req.body.username.trim();
-  let password = req.body.password;
+app.post("/users/signin",
+  catchError(async (req, res) => {
+    let username = req.body.username.trim();
+    let password = req.body.password;
 
-  if (username !== "admin" || password !== "secret") {
-    req.flash("error", "Invalid credentials.");
-    res.render("signin", {
-      flash: req.flash(),
-      username: req.body.username,
-    });
-  } else {
-    req.session.username = username;
-    req.session.signedIn = true;
-    req.flash("info", "Welcome!");
-    res.redirect("/lists");
-  }
-});
+    let authenticated = await res.locals.store.authenticate(username, password);
+    if (!authenticated) {
+      req.flash("error", "Invalid credentials.");
+      res.render("signin", {
+        flash: req.flash(),
+        username: req.body.username,
+      });
+    } else {
+      let session = req.session;
+      session.username = username;
+      session.signedIn = true;
+      req.flash("info", "Welcome!");
+      res.redirect("/lists");
+    }
+  })
+);
 
 // Handle Sign Out
 app.post("/users/signout", (req, res) => {

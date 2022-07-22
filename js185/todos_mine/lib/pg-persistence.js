@@ -1,15 +1,21 @@
 const { dbQuery } = require("./db-query");
+const bcrypt = require("bcrypt");
 
 module.exports = class PgPersistence {
+  constructor(session) {
+    this.username = session.username;
+  }
 
   // Returns a promise that resolves to a sorted list of all the todo lists
   // together with their todos. The list is sorted by completion status and
   // title (case-insensitive). The todos in the list are unsorted.
   async sortedTodoLists() {
-    const ALL_TODOLISTS = "SELECT * FROM todolists ORDER BY lower(title) ASC";
+    const ALL_TODOLISTS = "SELECT * FROM todolists" +
+                          "  WHERE username = $1" +
+                          "  ORDER BY lower(title) ASC";
     const FIND_TODOS = "SELECT * FROM todos WHERE todolist_id = $1";
 
-    let result = await dbQuery(ALL_TODOLISTS);
+    let result = await dbQuery(ALL_TODOLISTS, this.username);
     let todoLists = result.rows;
 
     for (let index = 0; index < todoLists.length; ++index) {
@@ -41,11 +47,13 @@ module.exports = class PgPersistence {
   // todo list contains the todos for that list. The todos are not sorted. The
   // Promise resolves to `undefined` if the todo list is not found.
   async loadTodoList(todoListId) {
-    const FIND_TODOLIST = "SELECT * FROM todolists WHERE id = $1";
-    const FIND_TODOS = "SELECT * FROM todos WHERE todolist_id = $1";
+    const FIND_TODOLIST = "SELECT * FROM todolists" +
+                          "  WHERE id = $1 AND username = $2";
+    const FIND_TODOS = "SELECT * FROM todos" +
+                       "  WHERE todolist_id = $1 AND username = $2";
 
-    let resultTodoList = dbQuery(FIND_TODOLIST, todoListId);
-    let resultTodos = dbQuery(FIND_TODOS, todoListId);
+    let resultTodoList = dbQuery(FIND_TODOLIST, todoListId, this.username);
+    let resultTodos = dbQuery(FIND_TODOS, todoListId, this.username);
     let resultBoth = await Promise.all([resultTodoList, resultTodos]);
 
     let todoList = resultBoth[0].rows[0];
@@ -67,10 +75,10 @@ module.exports = class PgPersistence {
   // (case-insensitive).
   async sortedTodos(todoList) {
     const SORTED_TODOS = "SELECT * FROM todos" +
-                         "  WHERE todolist_id = $1" +
+                         "  WHERE todolist_id = $1 AND username = $2" +
                          "  ORDER BY done ASC, lower(title) ASC";
 
-    let result = await dbQuery(SORTED_TODOS, todoList.id);
+    let result = await dbQuery(SORTED_TODOS, todoList.id, this.username);
     return result.rows;
   }
 
@@ -79,9 +87,9 @@ module.exports = class PgPersistence {
   // exist. The id arguments must both be numeric.
   async toggleDoneTodo(todoListId, todoId) {
     const TOGGLE_DONE = "UPDATE todos SET done = NOT done" +
-                        "  WHERE todolist_id = $1 AND id = $2";
+                        "  WHERE todolist_id = $1 AND id = $2 AND username = $3";
 
-    let result = await dbQuery(TOGGLE_DONE, todoListId, todoId);
+    let result = await dbQuery(TOGGLE_DONE, todoListId, todoId, this.username);
     return result.rowCount > 0;
   }
 
@@ -89,18 +97,19 @@ module.exports = class PgPersistence {
   // `undefined` if either the todo list or the todo is not found. Note that
   // both IDs must be numeric.
   async loadTodo(todoListId, todoId) {
-    const FIND_TODO = "SELECT * FROM todos WHERE todolist_id = $1 AND id = $2";
+    const FIND_TODO = "SELECT * FROM todos" +
+                      "  WHERE todolist_id = $1 AND id = $2 AND username = $3";
 
-    let result = await dbQuery(FIND_TODO, todoListId, todoId);
+    let result = await dbQuery(FIND_TODO, todoListId, todoId, this.username);
     return result.rows[0];
   }
 
   // Delete a todo from the specified todo list. Returns a promise that resolves
   // to `true` on success, `false` on failure.
   async deleteTodo(todoListId, todoId) {
-    const DELETE_TODO = "DELETE FROM todos WHERE todolist_id = $1 AND id = $2";
+    const DELETE_TODO = "DELETE FROM todos WHERE todolist_id = $1 AND id = $2 AND username = $3";
 
-    let result = await dbQuery(DELETE_TODO, todoListId, todoId);
+    let result = await dbQuery(DELETE_TODO, todoListId, todoId, this.username);
     return result.rowCount > 0;
   }
 
@@ -108,9 +117,9 @@ module.exports = class PgPersistence {
   // list. Returns a promise that resolves to `true` on success, `false` on
   // failure.
   async createTodo(todoListId, title) {
-    const CREATE_TODO = "INSERT INTO todos (todolist_id, title) VALUES ($1, $2)";
+    const CREATE_TODO = "INSERT INTO todos (todolist_id, title, username) VALUES ($1, $2, $3)";
 
-    let result = await dbQuery(CREATE_TODO, todoListId, title);
+    let result = await dbQuery(CREATE_TODO, todoListId, title, this.username);
 
     return result.rowCount > 0;
   }
@@ -118,9 +127,9 @@ module.exports = class PgPersistence {
   // Mark all todos on the todo list as done. Returns `true` on success,
   // `false` if the todo list doesn't exist. The todo list ID must be numeric.
   async completeAllTodos(todoListId) {
-    const COMPLETE_ALL = "UPDATE todos SET done = true WHERE $1 and NOT done";
+    const COMPLETE_ALL = "UPDATE todos SET done = true WHERE $1 AND NOT done AND username = $2";
 
-    let result = await dbQuery(COMPLETE_ALL, todoListId);
+    let result = await dbQuery(COMPLETE_ALL, todoListId, this.username);
     return result.rowCount > 0;
   }
 
@@ -128,9 +137,9 @@ module.exports = class PgPersistence {
   // Promise that resolves to `true` on success, false if the todo list doesn't
   // exist.
   async deleteTodoList(todoListId) {
-    const DELETE_TODOLIST = "DELETE FROM todolists WHERE id = $1";
+    const DELETE_TODOLIST = "DELETE FROM todolists WHERE id = $1 AND username = $2";
 
-    let result = await dbQuery(DELETE_TODOLIST, todoListId);
+    let result = await dbQuery(DELETE_TODOLIST, todoListId, this.username);
     return result.rowCount > 0;
   }
 
@@ -142,18 +151,20 @@ module.exports = class PgPersistence {
   // Returns a Promise that resolves to `true` if a todo list with the specified
   // title exists in the list of todo lists, `false` otherwise.
   async existsTodoListTitle(title) {
-    const FIND_TODOLIST = "SELECT null from todolists WHERE title ILIKE $1";
+    const FIND_TODOLIST = "SELECT null from todolists WHERE title ILIKE $1 AND username = $2";
 
-    let result = await dbQuery(FIND_TODOLIST, title);
+    let result = await dbQuery(FIND_TODOLIST, title, this.username);
     return result.rowCount > 0;
   }
 
   // Set a new title for the specified todo list. Returns `true` on success,
   // `false` if the todo list isn't found. The todo list ID must be numeric.
   async setTodoListTitle(todoListId, title) {
-    const SET_TODOLIST_TITLE = "UPDATE todolists SET title = $1 WHERE id = $2";
+    const UPDATE_TITLE = "UPDATE todolists" +
+                         "  SET title = $1" +
+                         "  WHERE id = $2 AND username = $3";
 
-    let result = await dbQuery(SET_TODOLIST_TITLE, title, todoListId);
+    let result = await dbQuery(UPDATE_TITLE, title, todoListId, this.username);
     return result.rowCount > 0;
   }
 
@@ -168,14 +179,28 @@ module.exports = class PgPersistence {
   // todo lists. Returns a Promise that resolves to `true` on success, `false`
   // if the todo list already exists.
   async createTodoList(title) {
-    const CREATE_TODOLIST = "INSERT INTO todolists (title) VALUES ($1)";
+    const CREATE_TODOLIST = "INSERT INTO todolists (title, username) VALUES ($1, $2)";
 
     try {
-      let result = await dbQuery(CREATE_TODOLIST, title);
+      let result = await dbQuery(CREATE_TODOLIST, title, this.username);
       return result.rowCount > 0;
     } catch (error) {
       if (this.isUniqueConstraintViolation(error)) return false;
       throw error;
     }
   }
-};
+  
+    // Returns a Promise that resolves to `true` if `username` and `password`
+    // combine to identify a legitimate application user, `false` if either the
+    // `username` or `password` is invalid.
+    async authenticate(username, password) {
+      const FIND_HASHED_PASSWORD = "SELECT password FROM users" +
+                                   "  WHERE username = $1";
+  
+      let result = await dbQuery(FIND_HASHED_PASSWORD, username);
+      if (result.rowCount === 0) return false;
+  
+      return bcrypt.compare(password, result.rows[0].password);
+    }
+
+  };
