@@ -48,4 +48,4 @@ See below for a snapshot of all the features offerred by the application:
 - Add more functionality such as due dates and alerts
 
 ## Refernces
-- Project created for amademic learning based on curriculum by Launch School
+- Project created for academic learning based on curriculum by Launch School
