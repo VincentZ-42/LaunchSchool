@@ -1,0 +1,12 @@
+extends layout.pug
+
+block appContent
+		h1 Vincent Zhao
+		h1 You have #{money}
+		if !recentTransaction
+			p Transaction 1 = Groceries
+			p Transaction 2 = Movies
+			p Transaction 3 = Ice Cream
+		else
+			p You didn't buy anything.
+		button Logout
