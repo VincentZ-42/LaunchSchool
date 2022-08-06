@@ -1,4 +1,4 @@
-# To-Do List Manager
+# To-Do List Tracker
 
 ### Table of Contents
 - [Description](#description)
@@ -7,7 +7,7 @@
 - [References](#references)
 
 ## Description
-To-Do List Manager is an application that helps users track their custom built To-Do lists. Users can create or edit a To-Do list as well as tasks within each list. This application is run locally and is built with the express.js framework with code written in JavaScript. 
+To-Do List Tracker is an application that helps users track their custom built To-Do lists. Users can create or edit a To-Do list as well as tasks within each list. This application is run locally and is built with the express.js framework with code written in JavaScript. 
 
 See below for a snapshot of all the features offerred by the application:
 
@@ -48,4 +48,4 @@ See below for a snapshot of all the features offerred by the application:
 - Add more functionality such as due dates and alerts
 
 ## Refernces
-- Project created for amademic learning based on curriculum by Launch School
+- Project created for academic learning based on curriculum by Launch School
