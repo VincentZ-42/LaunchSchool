@@ -1,9 +1,14 @@
 const express = require("express"); // This is so we can use express for handling our routing
 const morgan = require("morgan");   // This is for using mordule to help with logging
+const { body, validationResult } = require("express-validator"); // Allows us to use the validation module
+const session = require("express-session"); // generates session ID unique to client browser
+const store = require("connect-loki");      // Uses session to persist data in noSQL database and store into file
+
 const app = express();              // This is the object of our backend server
 const PORT = 3000;                  // local environment to use as PORT
+const LokiStore = store(session);   // uses the session in our store to persist data
 
-let contactData = [
+const contactData = [
   {
     firstName: "Mike",
     lastName: "Jones",
@@ -42,6 +47,10 @@ const sortContacts = contacts => {
   });
 };
 
+const clone = object => {
+  return JSON.parse(JSON.stringify(object));
+};
+
 app.set("views", "./views");                        // server knows where to look for views
 app.set("view engine", "pug");                      // designates pug as our view template engine
 
@@ -50,13 +59,37 @@ app.use(express.urlencoded({ extended: false }));   // tells express to expect f
                                                     // - Allows us to accept form data and use req.body
 app.use(morgan("common"));                          // Uses common logging from morgan module
 
+// Initializes store and allows our data to persist
+app.use(session({
+  cookie: {
+    httpOnly: true,
+    maxAge: 31 * 24 * 60 * 60* 1000, // 31 days in milliseconds
+    path: "/",
+    secure: false,
+  },
+  name: "launch-school-contacts-manager-session-id",
+  resave: false,
+  saveuninitialized: true,
+  secret: "this is not very secure",
+  store: new LokiStore({}),
+}));
+
+// Middleware that Checks if we have contact data in req.session and if not, initialize it
+// Therefore, we are no longer referrencing contactData, we clone it and use unique data to session
+app.use((req, res, next) => {
+  if (!("contactData" in req.session)) {
+    req.session.contactData = clone(contactData);
+  }
+  next();
+});
+
 app.get("/", (req, res) => {
   res.redirect("/contacts");
 });
 
 app.get("/contacts", (req, res) => {
   res.render("contacts", {
-    contacts: sortContacts(contactData),
+    contacts: sortContacts(req.session.contactData),
   });
 });
 
@@ -64,72 +97,42 @@ app.get("/contacts/new", (req, res) => {
   res.render("new-contact");
 });
 
-const isAlphabetic = text => /^[a-z]+$/i.test(text);
+const validateName = (name, whichName) => {
+  return body(name)
+  .trim()
+  .isLength({ min: 1 })
+  .withMessage(`${whichName} is required`)
+  .bail()
+  .isLength({ max: 25 })
+  .withMessage(`${whichName} is too long. Maximum length is 25 characters.`)
+  .isAlpha()
+  .withMessage(`${whichName} contains invalid characters. THe name must be alphabetic.`);
+};
 
 app.post("/contacts/new",
-  // middleware thaat initates array to hold errors in res.locals (data passed between middleware)
-  (req, res, next) => {
-    res.locals.errorMessages = [];
-    next();
-  },
-  // middleware to trim all whitespaces from inputs
-  (req, res, next) => { // trim whitespace
-    res.locals.firstName   = req.body.firstName.trim();
-    res.locals.lastName    = req.body.lastName.trim();
-    res.locals.phoneNumber = req.body.phoneNumber.trim();
-    next();
-  },
-  // Validates first name
-  (req, res, next) => {
-    let firstName = res.locals.firstName;
-    if (firstName.length === 0) {
-      res.locals.errorMessages.push("First name is required.");
-    } else if (firstName.length > 25) {
-      res.locals.errorMessages.push("First name is too long. Maximum length is 25 characters.");
-    } else if (!isAlphabetic(firstName)) {
-      res.locals.errorMessages.push("First name contains invalid characters. The name must be alphabetic.");
-    }
-    next();
-  },
-  // Valdiates last name
-  (req, res, next) => {
-    let lastName = res.locals.lastName;
-    if (lastName.length === 0) {
-      res.locals.errorMessages.push("Last name is required.");
-    } else if (lastName.length > 25) {
-      res.locals.errorMessages.push("Last name is too long. Maximum length is 25 characters.");
-    } else if (!isAlphabetic(lastName)) {
-      res.locals.errorMessages.push("Last name contains invalid characters. The name must be alphabetic.");
-    }
-    next();
-  },
-  // Validates phone number
-  (req, res, next) => {
-    if (req.body.phoneNumber.length === 0) {
-      res.locals.errorMessages.push("Phone Number is required.");
-    } else if (!/^\d\d\d-\d\d\d-\d\d\d\d$/.test(req.body.phoneNumber)) {
-      res.locals.errorMessages.push("Invalid phone number format. Use ###-###-####");
-    }
-    next();
-  },
-  // middleware that checks for duplicates
-  (req, res, next) => {
-    let fullName = `${res.locals.firstName} ${res.locals.lastName}`;
-    let foundContact = contactData.find(contact => {
-      return `${contact.firstName} ${contact.lastName}` === fullName;
-    });
+  [
+    // validates first name n last name
+    validateName("firstName", "First"),
+    validateName("lastName", "Last"),
 
-    if (foundContact) {
-      res.locals.errorMessages.push(`${fullName} is already on your contact list. Duplicates are not allowed.`);
-    }
-
-    next();
-  },
+    // validates phone number
+    body("phoneNumber")
+      .trim()
+      .isLength({ min: 1 })
+      .withMessage("Phone number is required")
+      .bail()
+      .matches(/\d\d\d-\d\d\d-\d\d\d\d$/)
+      .withMessage("Invalid phone number format. Use ###-###-####"),
+  ],
   // Checks all previous validation and renders form with error messages
   (req, res, next) => {
-    if (res.locals.errorMessages.length > 0) {
+    let errors = validationResult(req);
+    if (!errors.isEmpty()) {
       res.render("new-contact", {
-        errorMessages: res.locals.errorMessages,
+        errorMessages: errors.array().map(error => error.msg),
+        fname: req.body.firstName,
+        lname: req.body.lastName,
+        pnumber: req.body.phoneNumber,
       });
     } else {
       next();
@@ -139,7 +142,7 @@ app.post("/contacts/new",
   (req, res) => {
     // contactData.push({ ...req.body })
     // More common way of data extraction using spread syntax ^^^
-    contactData.push({
+    req.session.contactData.push({
       firstName: req.body.firstName,
       lastName: req.body.lastName,
       phoneNumber: req.body.phoneNumber
