@@ -127,6 +127,17 @@ class TodoList {
     this.title = title;
   }
 
+  // Static method to convert raw data back into todolist objects
+  static makeTodoList(rawTodoList) {
+    let todoList = Object.assign(new TodoList(), {
+      id: rawTodoList.id,
+      title: rawTodoList.title,
+    });
+
+    rawTodoList.todos.forEach(todo => todoList.add(Todo.makeTodo(todo)));
+    return todoList;
+  }
+
   // _ in name indicates "private" method"
   _validateIndex(index) {
     if (!(index in this.todos)) {

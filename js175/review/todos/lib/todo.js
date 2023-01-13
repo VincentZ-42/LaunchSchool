@@ -27,6 +27,11 @@ class Todo {
   setTitle(title) {
     this.title = title;
   }
+
+  // Used to convered our raw data back into objects
+  static makeTodo(rawTodo) {
+    return Object.assign(new Todo(), rawTodo);
+  }
 }
 
 Todo.DONE_MARKER = "X";
