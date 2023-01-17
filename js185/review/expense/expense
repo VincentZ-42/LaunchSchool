@@ -1,0 +1,54 @@
+#!/usr/bin/env node
+
+const PROCESS = require('process');
+let args = PROCESS.argv;
+
+const { Client } = require('pg');
+let client = new Client({ database: "expenses" });
+
+async function listExpenses() {
+  await client.connect();
+
+  let data = await client.query("SELECT * FROM expenses ORDER BY created_on DESC");
+
+  data.rows.forEach(expense => {
+    let id = expense.id;
+    let date = expense.created_on;
+    let amount = expense.amount;
+    let memo = expense.memo;
+    console.log(`${id} | ${date} | ${amount.padStart(8)} | ${memo}`);
+  });
+
+  await client.end();
+}
+
+function displayHelp() {
+  const help = [
+    "An expense recording system\n",
+    "Commands:\n",
+    "add AMOUNT MEMO [DATE] - record a new expense",
+    "clear - delete all expenses",
+    "list - list all expenses",
+    "delete NUMBER - remove expense with id NUMBER",
+    "search QUERY - list expenses with a matching memo field",
+  ]
+  console.log(help.join('\n'));
+}
+
+async function addExpense(amount, memo) {
+  # left off on making this function
+}
+
+let command = args[2];
+
+if (command === 'list') {
+  listExpenses();
+} else if (command === 'add') {
+  if (args.length !== 5) {
+    console.error("You must provide an amount and memo.")
+  } else {
+    addExpense(args[3], args[4]);
+  }
+} else {
+  displayHelp();
+}
