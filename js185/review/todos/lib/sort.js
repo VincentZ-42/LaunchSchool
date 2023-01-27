@@ -12,23 +12,18 @@ const compareByTitle = (itemA, itemB) => {
   }
 };
 
-module.exports = {
-  // return the list of todo lists sorted by completion status and title.
-  sortTodoLists(todoLists) {
-    let undone = todoLists.filter(todoList => !todoList.isDone());
-    let done = todoLists.filter(todoList => todoList.isDone());
-    undone.sort(compareByTitle);
-    done.sort(compareByTitle);
-    return [].concat(undone, done);
-  },
+// Sort and return a list of todo lists or todos that have been partitioned by
+// their completion status
+const sortItems = (undone, done) => {
+  undone.sort(compareByTitle);
+  done.sort(compareByTitle);
+  return [].concat(undone, done);
+};
 
-  // return the list of todos in the todo list sorted by completion status and
-  // title.
-  sortTodos(todoList) {
-    let undone = todoList.todos.filter(todo => !todo.isDone());
-    let done = todoList.todos.filter(todo => todo.isDone());
-    undone.sort(compareByTitle);
-    done.sort(compareByTitle);
-    return [].concat(undone, done);
-  },
+module.exports = {
+  // Return a list of todo lists or todos sorted by their completion status and
+  // title (case-sensitive). The uncompleted adn completed items must be passed
+  // to the method via the 'undone' and 'done' arguments.
+  sortTodoLists: sortItems,
+  sortTodos: sortItems,
 };
