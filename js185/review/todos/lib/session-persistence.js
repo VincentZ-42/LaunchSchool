@@ -1,6 +1,8 @@
 const SeedData = require("./seed-data");
 const deepCopy = require("./deep-copy");
 const { sortTodoLists, sortTodos } = require("./sort");
+const nextId = require("./next-id");
+const { addListener } = require("nodemon");
 
 module.exports = class SessionPersistence {
   constructor(session) {
@@ -41,17 +43,113 @@ module.exports = class SessionPersistence {
   // Returns `undefined` if not found.
   // Note that `todoListId` must be numeric.
   loadTodoList = (todoListId) => {
-    let todoLists = this._todoLists.find(todoList => todoList.id === todoListId);
-    return deepCopy(todoLists);
+    let todoList = this._findTodoList(todoListId);
+    return deepCopy(todoList);
   };
 
   // Find a todo with the indicated ID in the indicated todo list. Returns
   // `undefined` if not found. Note that both `todoListId` and `todoId` must be
   // numeric.
   loadTodo = (todoListId, todoId) => {
-    let todoList = this.loadTodoList(todoListId);
+    let todo = this._findTodo(todoListId, todoId);
+    return deepCopy(todo);
+  };
+
+  // Toggle a todo between the done and not done state. Returns 'true' on
+  // success, 'false' if the todo or todo list doesn't exist. The id arguments
+  // must both be numeric.
+  toggleDoneTodo(todoListId, todoId) {
+    let todo = this._findTodo(todoListId, todoId);
+    if (!todo) return false;
+
+    todo.done = !todo.done;
+    return true;
+  }
+
+  // Returns a reference to the todo list with the indicated ID. Returns
+  // 'undefined'. if not found. Note that 'todoListId' must be numeric.
+  _findTodoList(todoListId) {
+    return this._todoLists.find(todoList => todoList.id === todoListId);
+  }
+
+  // Returns a reference to the indicated todo in the indicated todo list.
+  // Returns 'undefined' if either the todo list or the todo is not found. Note
+  // that both IDs must be numeric.
+  _findTodo(todoListId, todoId) {
+    let todoList = this._findTodoList(todoListId);
     if (!todoList) return undefined;
 
     return todoList.todos.find(todo => todo.id === todoId);
-  };
+  }
+
+  // Deletes the specified todo fom the specifed todo list. Returns 'true' on
+  // success, 'false' if the todo or todo list doesn't exist. The id arguments
+  // must both be numeric.
+  deleteTodo(todoListId, todoId) {
+    let todoList = this._findTodoList(todoListId);
+    if (!todoList) return false;
+
+    let todoIndex = todoList.todos.findIndex(todo => todo.id === todoId);
+    if (!todoIndex) return false;
+
+    todoList.todos.splice(todoIndex, 1);
+    return true;
+  }
+
+  // Delete a todo list from the list of todo lists. Returns 'true' on success,
+  // 'false' if the todo list doesn't exist. The ID argument must be numeric
+  deleteTodoList(todoListId) {
+    let todoListIndex = this._todoLists.findIndex(todoList => {
+      return todoList.id === todoListId;
+    });
+
+    if (!todoListIndex) return false;
+
+    this._todoLists.splice(todoListIndex, 1);
+    return true;
+  }
+
+  // Marks all todos in todoList as done. Returns 'true' on success
+  // 'false' if the todo list doesn't exist. The todo list ID must be numeric
+  completeAllTodos(todoListId) {
+    let todoList = this._findTodoList(todoListId);
+    if (!todoList) return false;
+
+    todoList.todos.filter(todo => !todo.done)
+                  .forEach(todo => todo.done = true);
+
+    return true;
+  }
+
+  // Create a new todo with teh specified title and add it to the indicated todo
+  // list. Returns 'true' on sucess, 'false' on failure
+  createTodo(todoListId, title) {
+    let todoList = this._findTodoList(todoListId);
+    if (!todoList) return false;
+
+    todoList.todos.push({
+      title,
+      id: nextId(),
+      done: false,
+    });
+
+    return true;
+  }
+
+  // Set the title for specified Todo List
+  // Returns true on success, false if todo lsit isn't found
+  // THe todo list ID must be numeric
+  setTodoListTitle(todoListId, title) {
+    let todoList = this._findTodoList(todoListId);
+    if (!todoList) return false;
+
+    todoList.title = title;
+    return true;
+  }
+
+  // Returns 'true' if a todo list with teh specified title exists in the list
+  // of todo lists. 'false' otherwise
+  existsTodoListTitle(title) {
+    return this._todoLists.some(todoList => todoList.title === title);
+  }
 };
