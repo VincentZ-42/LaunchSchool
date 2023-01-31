@@ -22,6 +22,12 @@ module.exports = class SessionPersistence {
     return todoList.todos.some(todo => !todo.done);
   }
 
+  // Reeturns true if error seems to indicate a unique constraint
+  // violation, false otherwise
+  isUniqueConstraintViolation(_error) {
+    return false;
+  }
+  
   // Return the list of todo lists sorted by completion status 
   // and title (case sensistive)
   sortedTodoLists() {

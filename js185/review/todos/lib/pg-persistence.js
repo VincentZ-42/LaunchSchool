@@ -1,11 +1,6 @@
 const { dbQuery } = require("./db-query");
 
 module.exports = class PgPersistence {
-  constructor(session) {
-    // this._todoLists = session.todoLists || deepCopy(SeedData);
-    // session.todoLists = this._todoLists;
-  }
-
   // Returns a promise that resolves to a sorted lsit of all the todo lists
   // together with their todos. The list is sorted by completion status and
   // title (case-insensitive). The todos in the lsit are unsorted.
@@ -35,6 +30,12 @@ module.exports = class PgPersistence {
   // Does the todo list have any undone todos? Returns true if yes, false if no.
   hasUndoneTodos(todoList) {
     return todoList.todos.some(todo => !todo.done);
+  }
+
+  // Returns 'true' if 'error' seems to indicate a 'UNIQUE' constraint
+  // violation, 'false' otherwise.
+  isUNiqueConstraintViolation(error) {
+    return /duplicate key value violates unique constraint/.test(String(error));
   }
 
   // Returns a promise that resolves t othe todo list with the specified ID. The
@@ -130,18 +131,17 @@ module.exports = class PgPersistence {
   }
 
   // Create a new todo list with the specified title and add it to the list of
-  // todo lists. Returns 'true' on success, 'false' on failure. (At this time,
-  // there are no known failure onditions.)
-  createTodoList(title) {
-    // if (this.existsTodoListTitle(title)) return false;
-
-    // this._todoLists.push({
-    //   id: nextId(),
-    //   title,
-    //   todos: [],
-    // });
-
-    // return true;
+  // todo lists. Returns a promise that resolves to 'true' on success, 
+  // 'false' if the todo list already exists
+  async createTodoList(title) {
+    const CREATE_TODOLIST = "INSERT INTO todolists (title) VALUES ($1)";
+    try {
+      let result = await dbQuery(CREATE_TODOLIST, title);
+      return result.rowCount > 0;
+    } catch (error) {
+      if (this.isUNiqueConstraintViolation(error)) return false;
+      throw error;
+    }
   }
 
   // Set the title for specified Todo List

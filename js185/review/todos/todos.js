@@ -42,6 +42,8 @@ app.use((req, res, next) => {
 
 // Extract session info
 app.use((req, res, next) => {
+  res.locals.username = req.session.username;
+  res.locals.signedIn = req.session.signedIn;
   res.locals.flash = req.session.flash;
   delete req.session.flash;
   next();
@@ -50,6 +52,14 @@ app.use((req, res, next) => {
 // Redirect start page
 app.get("/", (req, res) => {
   res.redirect("/lists");
+});
+
+// Render the Sign in Page
+app.get("/users/signin", (req, res) => {
+  req.flash("info", 'Please sign in.');
+  res.render("signin", {
+    flash: req.flash(),
+  });
 });
 
 // Render the list of todo lists
@@ -86,7 +96,7 @@ app.post("/lists",
       .isLength({ max: 100 })
       .withMessage("List title must be between 1 and 100 characters."),
   ],
-  (req, res, next) => {
+  catchError(async (req, res) => {
     let store = res.locals.store;
     let todoListTitle = req.body.todoListTitle;
 
@@ -101,14 +111,14 @@ app.post("/lists",
     if (!errors.isEmpty()) {
       errors.array().forEach(message => req.flash("error", message.msg));
       rerenderNewList();
-    } else if (!store.createTodoList(todoListTitle)) {
+    } else if (! (await store.createTodoList(todoListTitle))) {
       req.flash("error", "List Title must be unique.");
       rerenderNewList();
     } else {
       req.flash("success", "The todo list has been created.");
       res.redirect("/lists");
     }
-  }
+  })
 );
 
 // Render individual todo list and its todos
@@ -257,22 +267,59 @@ app.post("/lists/:todoListId/edit",
         flash: req.flash(),
       });
     };
+    try {
+      let errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        errors.array().forEach(message => req.flash("error", message.msg));
+        rerenderEditList();
+      } else if (await store.existsTodoListTitle(todoListTitle)) {
+        req.flash("error", "The list title must be unique");
+        rerenderEditList();
+      } else {
+        let updated = await store.setTodoListTitle(+todoListId, todoListTitle);
+        if (!updated) throw new Error("Not Found.");
 
-    let errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      errors.array().forEach(message => req.flash("error", message.msg));
-      rerenderEditList();
-    } else if (await store.existsTodoListTitle(todoListTitle)) {
-      req.flash("error", "The list title must be unique");
-      rerenderEditList();
-    } else if (!(await store.setTodoListTitle(+todoListId, todoListTitle))) {
-        throw new Error("Not found.");
-    } else {
         req.flash("success", "Todo list updated.");
         res.redirect(`/lists/${todoListId}`);
+      }
+    } catch (error) {
+      if (store.isUniqueConstraintViolation(error)) {
+        req.flash("error", "The list title must be unique.");
+        rerenderEditList();
+      } else {
+        throw error;
+      }
     }
   })
 );
+
+// Handles Sign in form submission
+app.post("/users/signin", 
+  (req, res) => {
+
+    let username = req.body.username.trim();
+    let password = req.body.password;
+
+    if (username !== 'admin' || password !== 'secret') {
+      req.flash('error', 'Invalid credentials');
+      res.render("signin", {
+        flash: req.flash(),
+        username: req.body.username,
+      })
+    } else {
+      req.session.username = username;
+      req.session.signedIn = true;
+      req.flash('info', 'Welcome!');
+      res.redirect("/lists");
+    }
+});
+
+// Handles sign out 
+app.post("/users/signout", (req, res) => {
+  delete req.session.username;
+  delete req.session.signedIn;
+  res.redirect("/users/signin");
+});
 
 // Error handler
 app.use((err, req, res, _next) => {
